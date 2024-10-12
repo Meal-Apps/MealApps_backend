@@ -22,7 +22,7 @@ class ManagerController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function login()
+    public function login(Request $request)
     {
         // Validate the login credentials
         $credentials = request()->validate([

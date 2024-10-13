@@ -12,9 +12,12 @@ Route::post('/login', [ManagerController::class, 'login']);
 
 Route::post('/userlogin',[UserController::class, 'loginUser']);
 
-
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/getallusers', [UserController::class, 'getAllUsers']);
+});
 Route::middleware(['auth:sanctum', 'manager'])->group(function () {
     Route::post('/createuser', [UserController::class, 'createUser']);
     Route::post('/addbalance/{userID}', [BalanceController::class, 'store']);
     Route::post('/expense', [ExpenseController::class, 'store']);
+
 });

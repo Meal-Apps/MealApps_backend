@@ -16,6 +16,24 @@ class UserController extends Controller
      *
      *
      */
+    public function getAllUsers()
+    {
+        $manager = Auth::guard('manager')->user();
+        $user = Auth::guard('user')->user();
+
+        if ($manager) {
+            $users = User::where('manager_id', $manager->id)->get();
+            return response()->json(['users' => $users], 200);
+        }
+
+        if ($user) {
+            // Ensure the user can only see users managed by their manager
+            $users = User::where('manager_id', $user->manager_id)->get();
+            return response()->json(['users' => $users], 200);
+        }
+
+        return response()->json(['error' => 'Unauthorized. Authentication required.'], 401);
+    }
     public function createUser(Request $request)
     {
         // Check user is a manager

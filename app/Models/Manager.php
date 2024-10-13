@@ -25,4 +25,9 @@ class Manager extends Authenticatable
         'password' => 'hashed',
     ];
     protected $fillable = ['name', 'meal_name', 'email', 'password'];
+
+    public function users(){
+        return $this->hasMany(User::class);
+    }
+
 }

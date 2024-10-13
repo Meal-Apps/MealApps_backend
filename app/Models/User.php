@@ -52,4 +52,8 @@ class User extends Authenticatable
     {
         $this->belongsTo(Manager::class);
     }
+    public function balance()
+    {
+        $this->hasMany(Balance::class);
+    }
 }

@@ -73,7 +73,7 @@ class BalanceController extends Controller
             $totalBalance = $balances->sum('balance');
             return response()->json(['balances' => $balances, 'totalBalance' => $totalBalance], 200);
         }
-        
+        return response()->json(['error' => 'Invalid month'], 400);
         
         
     }

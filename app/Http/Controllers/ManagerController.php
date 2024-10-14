@@ -107,8 +107,13 @@ class ManagerController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Manager $manager)
+    public function logoutManager(Request $request)
     {
-        //
+        $manager = Auth::guard('manager')->user();
+        if ($manager) {
+            $manager->tokens()->delete();
+            return response()->json(['message' => 'Logged out successfully'], 200);
+        }
+        return response()->json(['error' => 'unauthorized'], 401);
     }
 }

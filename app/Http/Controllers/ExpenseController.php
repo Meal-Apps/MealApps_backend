@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Expense;
 use App\Http\Requests\StoreExpenseRequest;
 use App\Http\Requests\UpdateExpenseRequest;
+use Illuminate\Support\Facades\Auth;
 
 class ExpenseController extends Controller
 {
@@ -23,7 +24,54 @@ class ExpenseController extends Controller
     {
         //
     }
+    public function getExpensesByMonth($month)
+    {
+        $manager = Auth::guard('manager')->user();
+        $user = Auth::guard('user')->user();
 
+       if($month == 'current'){
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        if ($manager) {
+            $expenses = Expense::where('user_id', $manager->id)
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->get();
+        } elseif ($user) {
+            $expenses = Expense::where('user_id', $user->manager_id)
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->get();
+        } else {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        $totalExpenses = $expenses->sum('amount');
+        return response()->json(['expenses' => $expenses, 'totalExpenses' => $totalExpenses], 200);
+       }
+       if($month == 'previous'){
+        $previousMonth = now()->subMonth()->month;
+        $previousYear = now()->subMonth()->year;
+
+        if ($manager) {
+            $expenses = Expense::where('manager_id', $manager->id)
+                ->whereMonth('created_at', $previousMonth)
+                ->whereYear('created_at', $previousYear)
+                ->get();
+        } elseif ($user) {
+            $expenses = Expense::where('manager_id', $user->manager_id)
+                ->whereMonth('created_at', $previousMonth)
+                ->whereYear('created_at', $previousYear)
+                ->get();
+        } else {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        $totalExpenses = $expenses->sum('amount');
+        return response()->json(['expenses' => $expenses, 'totalExpenses' => $totalExpenses], 200);
+       }
+       return response()->json(['error' => 'Invalid month'], 400);
+
+    }
     /**
      * Store a newly created resource in storage.
      */

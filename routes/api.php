@@ -17,6 +17,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/getallbalance/{month}', [BalanceController::class, 'getBalanceByMonth']);
     Route::get('/getallexpenses/{month}', [ExpenseController::class, 'getExpensesByMonth']);
     Route::post('/logout', [UserController::class, 'logoutUser']);
+    Route::post('/logoutmanager', [ManagerController::class, 'logoutManager']);
 
 });
 Route::middleware(['auth:sanctum', 'manager'])->group(function () {

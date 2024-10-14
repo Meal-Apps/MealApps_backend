@@ -14,7 +14,7 @@ Route::post('/userlogin',[UserController::class, 'loginUser']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/getallusers', [UserController::class, 'getAllUsers']);
-    Route::get('/getallbalance', [BalanceController::class, 'getAllBalances']);
+    Route::get('/getallbalance/{month}', [BalanceController::class, 'getBalanceByMonth']);
 });
 Route::middleware(['auth:sanctum', 'manager'])->group(function () {
     Route::post('/createuser', [UserController::class, 'createUser']);

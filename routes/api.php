@@ -12,6 +12,9 @@ Route::post('/login', [ManagerController::class, 'login']);
 
 Route::post('/userlogin',[UserController::class, 'loginUser']);
 
+Route::post('/forgot-password', [ManagerController::class, 'forgotPassword']);
+Route::post('/reset-password', [ManagerController::class, 'resetPassword']);
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/getallusers', [UserController::class, 'getAllUsers']);
     Route::get('/getallbalance/{month}', [BalanceController::class, 'getBalanceByMonth']);

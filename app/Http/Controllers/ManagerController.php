@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Manager;
 use App\Http\Requests\StoreManagerRequest;
 use App\Http\Requests\UpdateManagerRequest;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ResetPasswordMail;
+use Illuminate\Support\Str;
 
 class ManagerController extends Controller
 {
@@ -104,6 +107,7 @@ class ManagerController extends Controller
         //
     }
 
+
     /**
      * Remove the specified resource from storage.
      */
@@ -115,5 +119,48 @@ class ManagerController extends Controller
             return response()->json(['message' => 'Logged out successfully'], 200);
         }
         return response()->json(['error' => 'unauthorized'], 401);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        
+
+        $manager = Manager::where('email', $request->email)->first();
+
+        if (!$manager) {
+            return response()->json(['error' => 'We can\'t find a manager with that email address.'], 404);
+        }
+
+        $token = Str::random(60);
+        $manager->update(['reset_token' => $token]);
+
+        // Send email using Mailtrap
+        Mail::to($manager->email)->send(new ResetPasswordMail($token));
+
+        return response()->json(['message' => 'We have emailed your password reset token!'], 200);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $manager = Manager::where('email', $request->email)
+                          ->where('reset_token', $request->token)
+                          ->first();
+
+        if (!$manager) {
+            return response()->json(['error' => 'This password reset token is invalid.'], 400);
+        }
+
+        $manager->password = Hash::make($request->password);
+        $manager->reset_token = null;
+        $manager->save();
+
+        return response()->json(['message' => 'Your password has been reset!'], 200);
     }
 }

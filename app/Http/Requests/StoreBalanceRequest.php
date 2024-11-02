@@ -23,6 +23,7 @@ class StoreBalanceRequest extends FormRequest
     {
         return [
             'balance' => 'required|numeric|min:0',
+            'user_id' => 'required'
         ];
     }
 }

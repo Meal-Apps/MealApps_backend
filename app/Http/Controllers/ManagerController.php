@@ -17,9 +17,58 @@ class ManagerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $manager = Auth::guard('manager')->user();
+        $user = Auth::guard('user')->user();
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        // Adjusted the foreign key to 'user_id'
+       if($manager){
+           $allInfo = Manager::with(['expenses' => function ($query) use ($manager, $currentMonth, $currentYear) {
+               $query->where('manager_id', $manager->id)
+                   ->whereMonth('date', $currentMonth)
+                   ->whereYear('date', $currentYear);
+           },'balance' => function ($query) use ($manager, $currentMonth, $currentYear) {
+               $query->where('manager_id', $manager->id)
+                   ->whereMonth('created_at', $currentMonth)
+                   ->whereYear('created_at', $currentYear);
+           },'users'])->findOrFail($manager->id);
+       }
+       if($user){
+           $allInfo = Manager::with(['expenses' => function ($query) use ($user, $currentMonth, $currentYear) {
+               $query->where('manager_id',$user->manager_id)
+                   ->whereMonth('date', $currentMonth)
+                   ->whereYear('date', $currentYear);
+           },'balance' => function ($query) use ($user, $currentMonth, $currentYear) {
+               $query->where('manager_id', $user->manager_id)
+                   ->whereMonth('created_at', $currentMonth)
+                   ->whereYear('created_at', $currentYear);
+           },'users'])->findOrFail($user->manager_id);
+       }
+        $totalExpenses = $allInfo->expenses->sum('amount');
+        $totalBalance = $allInfo->balance->sum('balance');
+
+        $currentBalance = $totalBalance - $totalExpenses;
+
+
+        return response()->json([
+            'manager' => [
+                'id' => $allInfo->id,
+                'name' => $allInfo->name,
+                'email' => $allInfo->email,
+                'meal_name' => $allInfo->meal_name,
+
+            ],
+            'users' => $allInfo->users,
+            'expenses' => $allInfo->expenses,
+            'balance' => $allInfo->balance,
+            'totalExpenses' => $totalExpenses,
+            'totalBalance' => $totalBalance,
+            'currentBalance' => $currentBalance,
+
+        ]);
     }
 
     /**
@@ -43,6 +92,8 @@ class ManagerController extends Controller
 
             return response()->json([
                 'message' => 'Manager logged in successfully',
+                'name' => $manager->name,
+                'meal_name' => $manager->meal_name,
                 'access_token' => $token,
                 'token_type' => 'Bearer',
             ]);
@@ -51,10 +102,7 @@ class ManagerController extends Controller
         //  return an error response
         return response()->json([
             'message' => 'Invalid login credentials',
-            'errors' => [
-                'email' => ['These credentials do not match our records.'],
-                'password' => ['These credentials do not match our records.']
-            ]
+
         ], 401);
     }
 
@@ -124,7 +172,7 @@ class ManagerController extends Controller
     public function forgotPassword(Request $request)
     {
         $request->validate(['email' => 'required|email']);
-        
+
 
         $manager = Manager::where('email', $request->email)->first();
 

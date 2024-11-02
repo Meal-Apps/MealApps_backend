@@ -6,6 +6,7 @@ use App\Models\Expense;
 use App\Http\Requests\StoreExpenseRequest;
 use App\Http\Requests\UpdateExpenseRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
 {
@@ -34,14 +35,14 @@ class ExpenseController extends Controller
         $currentYear = now()->year;
 
         if ($manager) {
-            $expenses = Expense::where('user_id', $manager->id)
-                ->whereMonth('created_at', $currentMonth)
-                ->whereYear('created_at', $currentYear)
+            $expenses = Expense::where('manager_id', $manager->id)
+                ->whereMonth('date', $currentMonth)
+                ->whereYear('date', $currentYear)
                 ->get();
         } elseif ($user) {
-            $expenses = Expense::where('user_id', $user->manager_id)
-                ->whereMonth('created_at', $currentMonth)
-                ->whereYear('created_at', $currentYear)
+            $expenses = Expense::where('manager_id', $user->manager_id)
+                ->whereMonth('date', $currentMonth)
+                ->whereYear('date', $currentYear)
                 ->get();
         } else {
             return response()->json(['error' => 'Unauthorized'], 401);
@@ -55,13 +56,13 @@ class ExpenseController extends Controller
 
         if ($manager) {
             $expenses = Expense::where('manager_id', $manager->id)
-                ->whereMonth('created_at', $previousMonth)
-                ->whereYear('created_at', $previousYear)
+                ->whereMonth('date', $previousMonth)
+                ->whereYear('date', $previousYear)
                 ->get();
         } elseif ($user) {
             $expenses = Expense::where('manager_id', $user->manager_id)
-                ->whereMonth('created_at', $previousMonth)
-                ->whereYear('created_at', $previousYear)
+                ->whereMonth('date', $previousMonth)
+                ->whereYear('date', $previousYear)
                 ->get();
         } else {
             return response()->json(['error' => 'Unauthorized'], 401);
@@ -82,7 +83,7 @@ class ExpenseController extends Controller
         $manager = auth()->guard('manager')->user();
 
        $expense = Expense::create([
-            'user_id' => $manager->id,
+            'manager_id' => $manager->id,
             'amount' => $validated['amount'],
             'description' => $validated['description'],
             'date' => $validated['date'],
@@ -119,8 +120,20 @@ class ExpenseController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Expense $expense)
+    public function destroy(Request $request, $id)
     {
-        //
+        $manager = auth()->guard('manager')->user();
+
+        // Check if the expense exists and belongs to the manager
+        $expense = Expense::where('id', $id)->where('manager_id', $manager->id)->first();
+
+        if (!$expense) {
+            return response()->json(['error' => 'Expense not found '], 404);
+        }
+
+        // Delete the expense
+        $expense->delete();
+
+        return response()->json(['message' => 'Expense deleted successfully'], 200);
     }
 }

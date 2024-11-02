@@ -29,7 +29,12 @@ class Manager extends Authenticatable
     public function users(){
         return $this->hasMany(User::class);
     }
+    public function balance()
+    {
+       return $this->hasMany(Balance::class, 'manager_id');
+    }
     public function expenses(){
-        return $this->hasMany(Expense::class);
+
+        return $this->hasMany(Expense::class,'manager_id','id');
     }
 }

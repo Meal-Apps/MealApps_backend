@@ -9,7 +9,7 @@ use Laravel\Sanctum\HasApiTokens;
 class Expense extends Model
 {
     use HasFactory,HasApiTokens;
-    protected $fillable = ['user_id','amount','description','date'];
+    protected $fillable = ['manager_id','amount','description','date'];
     public function manager(){
         return $this->belongsTo(Manager::class);
     }

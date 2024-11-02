@@ -16,6 +16,20 @@ class UserController extends Controller
      *
      *
      */
+    public function userSearch(Request $request)
+
+    {
+        $manager = Auth::guard('manager')->user();
+        $query = $request->input('query');
+        $request->validate([
+            'query' => 'required|string|min:2',
+        ]);
+        $user = User::where('manager_id', $manager->id)
+        ->where('name', 'LIKE', "%{$query}%")
+            ->orWhere('email', 'LIKE', "%{$query}%")
+            ->paginate(10);
+        return response()->json($user);
+    }
     public function getAllUsers()
     {
         $manager = Auth::guard('manager')->user();
@@ -73,7 +87,14 @@ class UserController extends Controller
         if(Auth::attempt(['email'=>$validatedData['email'],'password'=>$validatedData['password']])){
             $user = Auth::user();
             $token= $user->createToken('MyApp')->plainTextToken;
-            return response()->json(['token'=>$token],200);
+            return response()->json([
+                'name' => $user->name,
+                'id' => $user->id,
+                'email' => $user->email,
+                'role' => 'user',
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+            ],200);
     }
         return response()->json(['error' => 'Unauthorized.'], 403);
 
@@ -87,5 +108,17 @@ public function logoutUser  (Request $request)
     }
     return response()->json(['error' => 'Unauthorized'], 401);
 }
-
+public function deleteUser(Request $request,$userId){
+        $manager = Auth::guard('manager')->user();
+        if (!$manager) {
+            return response()->json(['error' => 'Unauthorized. Only managers can delete user accounts.'], 403);
+        }
+        $user = User::where('id', $userId)->where('manager_id', $manager->id)->first();
+        if (!$user) {
+            return response()->json(['error' => 'User not found.'], 404);
+        }
+        $user->delete();
+        return response()->json(['message' => 'User account deleted successfully'], 200);
 }
+}
+

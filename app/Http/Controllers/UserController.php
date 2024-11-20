@@ -25,10 +25,32 @@ class UserController extends Controller
             'query' => 'required|string|min:2',
         ]);
         $user = User::where('manager_id', $manager->id)
-        ->where('name', 'LIKE', "%{$query}%")
-            ->orWhere('email', 'LIKE', "%{$query}%")
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                    ->orWhere('email', 'LIKE', "%{$query}%");
+            })
             ->paginate(10);
         return response()->json($user);
+    }
+    public function userSearchapp(Request $request ,$query)
+    {
+        $manager = Auth::guard('manager')->user();
+        if (!$manager) {
+            return response()->json(['error' => 'Unauthorized access'], 401);
+        }
+        if (!$query) {
+            return response()->json(['error' => 'Search query is required'], 400);
+        }
+
+        $user = User::where('manager_id', $manager->id)
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                    ->orWhere('email', 'LIKE', "%{$query}%");
+            })
+            ->paginate(10);
+        return response()->json($user);
+
+
     }
     public function getAllUsers()
     {
@@ -58,23 +80,33 @@ class UserController extends Controller
         }
 
         // Validate the request data
-        $validatedData = $request->validate([
+
+        $validator = validator()->make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-
         ]);
+        if(!$validator->fails()){
+            $validatedData = $validator->validated();
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => bcrypt($validatedData['password']),
+                'manager_id' => $manager->id,
+
+            ]);
+            return response()->json(['message' => 'User account created successfully', 'user' => $user], 201);
+        }else {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ]);
+        }
 
         // Create the new user account
-        $user = User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => bcrypt($validatedData['password']),
-            'manager_id' => $manager->id,
 
-        ]);
 
-        return response()->json(['message' => 'User account created successfully', 'user' => $user], 201);
+
     }
     public function loginUser(Request $request)
     {
@@ -96,7 +128,7 @@ class UserController extends Controller
                 'token_type' => 'Bearer',
             ],200);
     }
-        return response()->json(['error' => 'Unauthorized.'], 403);
+        return response()->json(['error' => 'Unauthorized.'], 401);
 
 }
 public function logoutUser  (Request $request)

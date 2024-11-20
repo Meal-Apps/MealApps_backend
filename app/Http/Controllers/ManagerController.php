@@ -112,23 +112,33 @@ class ManagerController extends Controller
     public function store(StoreManagerRequest $request)
     {
         // Validate the request data
-        $validatedData = $request->validated();
-
-        // Create a new manager
-        $manager = Manager::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'meal_name' => $validatedData['meal_name'],
-            'password' => bcrypt($validatedData['password']),
+        $validator = validator()->make($request->all(), [
+            'name' => 'required|string|max:255|unique:managers',
+            'meal_name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:managers',
+            'password' => 'required|string|min:8',
         ]);
 
+        if(!$validator->fails()){
+            $validatedData = $validator->validated();
 
+            $manager = Manager::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'meal_name' => $validatedData['meal_name'],
+                'password' => Hash::make($validatedData['password']),
+            ]);
 
-        // Return a response
-        return response()->json([
-            'message' => 'Manager registered successfully',
-            'manager' => $manager
-        ], 201);
+            return response()->json([
+                'message' => 'success',
+                'manager' => $manager
+            ], 201);
+        }else {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ]);
+        }
     }
 
     /**

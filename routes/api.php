@@ -33,6 +33,7 @@ Route::middleware(['auth:sanctum', 'manager'])->group(function () {
     Route::delete('/deleteexpense/{id}', [ExpenseController::class, 'destroy']);
     Route::delete('/deletemanager/{id}', [BalanceController::class, 'destroy']);
     Route::get('/usersearch', [UserController::class, 'userSearch']);
+    Route::get('/usersearch/{query}', [UserController::class, 'userSearchapp']);
     Route::delete('/deleteuser/{id}', [UserController::class, 'deleteUser']);
 
 });

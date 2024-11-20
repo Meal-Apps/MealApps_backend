@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Balance;
 use App\Http\Requests\StoreBalanceRequest;
 use App\Http\Requests\UpdateBalanceRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class BalanceController extends Controller
@@ -74,8 +75,8 @@ class BalanceController extends Controller
             return response()->json(['balances' => $balances, 'totalBalance' => $totalBalance], 200);
         }
         return response()->json(['error' => 'Invalid month'], 400);
-        
-        
+
+
     }
     /**
      * Show the form for creating a new resource.
@@ -89,10 +90,10 @@ class BalanceController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreBalanceRequest $request,$userID)
+    public function store(StoreBalanceRequest $request)
     {
     $validated = $request->validated();
-    $user = \App\Models\User::find($userID);
+    $user = \App\Models\User::find($validated['user_id']);
     if(!$user){
         return response()->json(['message' => 'User not found'], 404);
     }
@@ -136,8 +137,20 @@ class BalanceController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Balance $balance)
+    public function destroy(Request $request,$id)
     {
-        //
+        $manager = auth()->guard('manager')->user();
+
+        // Check if the expense exists and belongs to the manager
+        $balance = Balance::where('id', $id)->where('manager_id', $manager->id)->first();
+
+        if (!$balance) {
+            return response()->json(['error' => 'balance not found '], 404);
+        }
+
+        // Delete the expense
+        $balance->delete();
+
+        return response()->json(['message' => 'balance deleted successfully'], 200);
     }
 }

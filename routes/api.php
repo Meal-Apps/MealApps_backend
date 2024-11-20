@@ -12,17 +12,28 @@ Route::post('/login', [ManagerController::class, 'login']);
 
 Route::post('/userlogin',[UserController::class, 'loginUser']);
 
+Route::post('/forgot-password', [ManagerController::class, 'forgotPassword']);
+Route::post('/reset-password', [ManagerController::class, 'resetPassword']);
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/getallusers', [UserController::class, 'getAllUsers']);
     Route::get('/getallbalance/{month}', [BalanceController::class, 'getBalanceByMonth']);
     Route::get('/getallexpenses/{month}', [ExpenseController::class, 'getExpensesByMonth']);
     Route::post('/logout', [UserController::class, 'logoutUser']);
-    Route::post('/logoutmanager', [ManagerController::class, 'logoutManager']);
+    Route::get('/getManagers', [ManagerController::class, 'index']);
+
 
 });
 Route::middleware(['auth:sanctum', 'manager'])->group(function () {
+
+    Route::post('/logoutmanager', [ManagerController::class, 'logoutManager']);
     Route::post('/createuser', [UserController::class, 'createUser']);
-    Route::post('/addbalance/{userID}', [BalanceController::class, 'store']);
-    Route::post('/expense', [ExpenseController::class, 'store']);
+    Route::post('/addbalance', [BalanceController::class, 'store']);
+    Route::post('/addexpense', [ExpenseController::class, 'store']);
+    Route::delete('/deleteexpense/{id}', [ExpenseController::class, 'destroy']);
+    Route::delete('/deletemanager/{id}', [BalanceController::class, 'destroy']);
+    Route::get('/usersearch', [UserController::class, 'userSearch']);
+    Route::get('/usersearch/{query}', [UserController::class, 'userSearchapp']);
+    Route::delete('/deleteuser/{id}', [UserController::class, 'deleteUser']);
 
 });
